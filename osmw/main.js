@@ -303,7 +303,7 @@ function setMaps(lat, lon, zoom, maps, pin_lat, pin_lon, changeset){
 				
 				maplist += `
 					<tr id="item_${map.name}">
-						<td><input type="checkbox" id="checkbox_show_${map.name}" onchange="save_settings();"><img class="${map.domain.replace( /\./g , "" )}" src="favicons/${map.domain}.png" width="16" height="16"><a href="${get_url(map, map_lat,map_lon, zoom, pin_lat, pin_lon, changeset)}" id="a_${map.name}">${map.name}${oneway_note}</a></td>
+						<td><input type="checkbox" id="checkbox_show_${map.name}" ${map.default_check ? 'checked' : ''}  onchange="save_settings();"><img class="${map.domain.replace( /\./g , "" )}" src="favicons/${map.domain}.png" width="16" height="16"><a href="${get_url(map, map_lat,map_lon, zoom, pin_lat, pin_lon, changeset)}" id="a_${map.name}">${map.name}${oneway_note}</a></td>
 						<td class="td_description"><small>${map.hasOwnProperty('description') ? map.description : ''}</small></td>
 					</tr>
 				`;
