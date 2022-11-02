@@ -1,5 +1,5 @@
 # OpenSwitchMapsWeb
-Web version of [OpenSwitchMaps](https://github.com/limex/OpenSwitchMaps). Both are forks of repos from [tankaru (https://github.com/tankaru).
+Web version of [OpenSwitchMaps](https://github.com/limex/OpenSwitchMaps). Both are forks of repos from [tankaru] (https://github.com/tankaru).
 
 # Why not browser extension?
 I forked the version from tankaru, because I wanted to use my maps on my iphone and ipad. 
