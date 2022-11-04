@@ -526,7 +526,7 @@ function normalizeZoom(zoom){
 }
 
 //Global variables
-let lat = 51.5129, lon = 0.1, zoom = 13;
+let lat = 47.05711, lon = 15.51562, zoom = 15;
 let pin_lat, pin_lon;
 let changeset = 100000000;
 let country_code;
