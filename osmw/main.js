@@ -237,7 +237,7 @@ function get_url(map, lat, lon, zoom, pin_lat, pin_lon, changeset){
 function update_map_links(latlonzoom){
 	if (!latlonzoom){
 		document.getElementById("sorry").innerHTML = "<strong>Sorry, this URL is not supported.</strong>";
-		[lat, lon, zoom, pin_lat, pin_lon, changeset] = [51.5129, 0.1, 13, null, null, null];
+		[lat, lon, zoom, pin_lat, pin_lon, changeset] = [47.05711, 15.51562, 15, null, null, null];
 	} else {
 		document.getElementById("sorry").innerHTML = "";
 		[lat, lon, zoom, pin_lat, pin_lon, changeset] = latlonzoom;
