@@ -392,7 +392,6 @@ const maps_raw = [
       }
     },
   },
-
   {
     name: "BRouter Web",
     category: CYCLING_CATEGORY,
@@ -413,6 +412,34 @@ const maps_raw = [
     getLatLonZoom(url) {
       const match = url.match(
         /brouter\.de\/.*#map=(\d{1,2})\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
+      );
+      if (match) {
+        const [, zoom, lat, lon] = match;
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
+    name: "Bikerouter",
+    category: CYCLING_CATEGORY,
+    default_check: true,
+    domain: "bikerouter.de",
+    description: "Best bicycle routing on this planet",
+    // https://bikerouter.de/#map=14/47.0777/15.4904/bikerouter-outdoors,gravel-overlay&profile=m11n-gravel-pre
+    getUrl(lat, lon, zoom) {
+      return (
+        "https://bikerouter.de/#map=" +
+        zoom +
+        "/" +
+        lat +
+        "/" +
+        lon +
+        "/bikerouter-outdoors,gravel-overlay&profile=m11n-gravel-pre"
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /bikerouter\.de\/.*#map=(\d{1,2})\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
       );
       if (match) {
         const [, zoom, lat, lon] = match;
@@ -567,7 +594,7 @@ const maps_raw = [
     getUrl(lat, lon, zoom) {
       zoom = Math.round(zoom);
       return (
-        "https://www.park4night.com/carte_lieux?lat=" +
+        "https://www.park4night.com/de/carte_lieux?lat=" +
         lat +
         "&lng=" +
         lon +
@@ -2378,7 +2405,28 @@ const maps_raw = [
         return [lat, lon, zoom];
       }
     },
-  },  
+  },
+  {
+    name: "Peakvisor",
+    category: OUTDOOR_CATEGORY,
+    default_check: true,
+    domain: "peakvisor.com",
+    description: "3D View Panorama",
+    getUrl(lat, lon, zoom) {
+      return (
+        "http://peakvisor.com/panorama.html?lat=" + lat + "&lng=" + lon + "&alt=4598&yaw=-4.94&pitch=-7.67&hfov=60.00"
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /peakvisor\.com\/.*?lat=(-?\d[0-9.]*)&lng=(-?\d[0-9.]*)/
+      );
+      if (match) {
+        let [, lat, lng] = match;
+        return [lat, lon, 16];
+      }
+    },
+  }  
 ];
 
 const maps = sortByKey(maps_raw, "name");
