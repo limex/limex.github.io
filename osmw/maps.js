@@ -37,8 +37,6 @@ const TOOLS_CATEGORY = "Tools";
 const WEATHER_CATEGORY = "Weather, Science";
 const WINTER_CATEGORY = "Winter";
 
-
-
 function sortByKey(array, key) {
   return array.sort(function (a, b) {
     var x = a[key];
@@ -547,9 +545,7 @@ const maps_raw = [
     description: "Discover for multiple Sports",
     getUrl(lat, lon, zoom) {
       zoom = Math.round(zoom);
-      return (
-        "https://www.komoot.com/discover/Location/@" + lat + "," + lon
-      );
+      return "https://www.komoot.com/discover/Location/@" + lat + "," + lon;
     },
     getLatLonZoom(url) {
       const match = url.match(
@@ -562,7 +558,7 @@ const maps_raw = [
     },
   },
   {
-    // http://www.refuges.info/nav#lat=47.08286082279579&lon=15.447260141372682&zoom=17 
+    // http://www.refuges.info/nav#lat=47.08286082279579&lon=15.447260141372682&zoom=17
     name: "Refuges Info",
     category: OUTDOOR_CATEGORY,
     default_check: true,
@@ -571,7 +567,14 @@ const maps_raw = [
     getUrl(lat, lon, zoom) {
       zoom = Math.round(zoom);
       return (
-        "http://www.refuges.info/nav#lat=" + lat + "&" + lon + "&lon=" + lon + "&zoom=" + zoom 
+        "http://www.refuges.info/nav#lat=" +
+        lat +
+        "&" +
+        lon +
+        "&lon=" +
+        lon +
+        "&zoom=" +
+        zoom
       );
     },
     // https://www.refuges.info/nav?map=16/15.9197/46.876
@@ -580,7 +583,7 @@ const maps_raw = [
         /refuges\.info\/.*?map=(\d{1,2})\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
       );
       if (match) {
-        const [, zoom,lon,lat] = match;
+        const [, zoom, lon, lat] = match;
         return [lat, lon, zoom];
       }
     },
@@ -594,18 +597,17 @@ const maps_raw = [
     getUrl(lat, lon, zoom) {
       zoom = Math.round(zoom);
       return (
-        "https://www.park4night.com/de/carte_lieux?lat=" +
+        // https://www.park4night.com/de/search?lat=45.8017&lng=10.957699999999932&z=16
+        "https://www.park4night.com/de/search?lat=" +
         lat +
         "&lng=" +
         lon +
-        "&zoom=" +
+        "&z=" +
         zoom
       );
     },
     getLatLonZoom(url) {
-      const match = url.match(
-        /park4night\.com\/.*?lat=(-?\d[0-9.]*)&lng=(-?\d[0-9.]*)&zoom=(\d{1,2})/
-      );
+      const match = url.match(/park4night\.com\/.*?lat=(-?\d[0-9.]*)&lng=(-?\d[0-9.]*)&z=(\d{1,2})/);
       if (match) {
         const [, lat, lon, zoom] = match;
         return [lat, lon, zoom];
@@ -1092,6 +1094,29 @@ const maps_raw = [
     },
   },
   {
+    // https://wandrer.earth/dashboard/map#10.59/47.0028/15.5178
+    name: "Wandrer",
+    category: OUTDOOR_CATEGORY,
+    description: "Mark Strava Rides & Walks on Map",
+    default_check: true,
+    domain: "wandrer.earth",
+    getUrl(lat, lon, zoom) {
+      return (
+        "https://wandrer.earth/dashboard/map#" + zoom + "/" + lat + "/" + lon
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /wandrer\.earth\/.*map#(-?\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
+      );
+      if (match) {
+        let [, zoom, lat, lon] = match;
+        zoom = Math.round(zoom);
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
     name: "Bergfex",
     category: OUTDOOR_CATEGORY,
     description: "Topo, Tracks, Tourism",
@@ -1113,7 +1138,7 @@ const maps_raw = [
     },
     getLatLonZoom(url) {
       const match = url.match(
-        /bergfex\.at\/\?mapstate=?(-?\d[0-9.]*),(-?\d[0-9.]*),(\d{1,2}),/
+        /bergfex\.at\/.*\?mapstate=?(-?\d[0-9.]*),(-?\d[0-9.]*),(\d{1,2}),/
       );
       if (match) {
         let [, lat, lon, zoom] = match;
@@ -2350,41 +2375,45 @@ const maps_raw = [
     },
   },
   {
-		//https://osmand.net/map#11/35.6492/139.8395
-		name: "OsmAnd",
-		category: OUTDOOR_CATEGORY,
-		default_check: false,
-		domain: "osmand.net",
-		description: "",
-		getUrl(lat, lon, zoom) {
-			return `https://osmand.net/map/#${zoom}/${lat}/${lon}`;
-		},
-		getLatLonZoom(url) {
-			const match = url.match(/osmand\.net\/map\/#(\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/);
-			if (match) {
-				const [, zoom, lat, lon] = match;
-				return [lat, normalizeLon(lon), Math.round(Number(zoom))];
-			}
-		},
-	},
+    //https://osmand.net/map#11/35.6492/139.8395
+    name: "OsmAnd",
+    category: OUTDOOR_CATEGORY,
+    default_check: false,
+    domain: "osmand.net",
+    description: "",
+    getUrl(lat, lon, zoom) {
+      return `https://osmand.net/map/#${zoom}/${lat}/${lon}`;
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /osmand\.net\/map\/#(\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
+      );
+      if (match) {
+        const [, zoom, lat, lon] = match;
+        return [lat, normalizeLon(lon), Math.round(Number(zoom))];
+      }
+    },
+  },
   {
-		// https://api.maptiler.com/maps/874645db-d9b7-4abe-be15-86beea6b922e/?key=dWJtt6xXsxoSfRCqIovk#14.7/47.04154/15.52717
-		name: "MTB-Gravel",
-		category: CYCLING_CATEGORY,
-		default_check: true,
-		domain: "osmand.net",
-		description: "marked: private, no bike access, trails",
-		getUrl(lat, lon, zoom) {
-			return `https://api.maptiler.com/maps/874645db-d9b7-4abe-be15-86beea6b922e/?key=dWJtt6xXsxoSfRCqIovk#${zoom}/${lat}/${lon}`;
-		},
-		getLatLonZoom(url) {
-			const match = url.match(/maptiler\.com\/maps\/.*#(-?\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/);
-			if (match) {
-				const [, zoom, lat, lon] = match;
-				return [lat, lon, Math.round(Number(zoom))];
-			}
-		},
-	},
+    // https://api.maptiler.com/maps/874645db-d9b7-4abe-be15-86beea6b922e/?key=dWJtt6xXsxoSfRCqIovk#14.7/47.04154/15.52717
+    name: "MTB-Gravel",
+    category: CYCLING_CATEGORY,
+    default_check: true,
+    domain: "osmand.net",
+    description: "marked: private, no bike access, trails",
+    getUrl(lat, lon, zoom) {
+      return `https://api.maptiler.com/maps/874645db-d9b7-4abe-be15-86beea6b922e/?key=dWJtt6xXsxoSfRCqIovk#${zoom}/${lat}/${lon}`;
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /maptiler\.com\/maps\/.*#(-?\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
+      );
+      if (match) {
+        const [, zoom, lat, lon] = match;
+        return [lat, lon, Math.round(Number(zoom))];
+      }
+    },
+  },
   {
     name: "Waze Editor",
     category: OSM_CATEGORY,
@@ -2414,7 +2443,11 @@ const maps_raw = [
     description: "3D View Panorama",
     getUrl(lat, lon, zoom) {
       return (
-        "http://peakvisor.com/panorama.html?lat=" + lat + "&lng=" + lon + "&alt=4598&yaw=-4.94&pitch=-7.67&hfov=60.00"
+        "http://peakvisor.com/panorama.html?lat=" +
+        lat +
+        "&lng=" +
+        lon +
+        "&alt=4598&yaw=-4.94&pitch=-7.67&hfov=60.00"
       );
     },
     getLatLonZoom(url) {
@@ -2426,7 +2459,7 @@ const maps_raw = [
         return [lat, lon, 16];
       }
     },
-  }  
+  },
 ];
 
 const maps = sortByKey(maps_raw, "name");
