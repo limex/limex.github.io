@@ -1124,7 +1124,7 @@ const maps_raw = [
     domain: "bergfex.at",
     getUrl(lat, lon, zoom) {
       return (
-        "https://www.bergfex.at/?mapstate=" +
+        "https://www.bergfex.at/oesterreich/?mapstate=" +
         lat +
         "," +
         lon +
