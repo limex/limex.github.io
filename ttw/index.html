@@ -1,0 +1,180 @@
+<html>
+<head>
+	<title>OpenSwitchMaps Web</title>
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-154852876-1"></script>
+	<script>
+	  window.dataLayer = window.dataLayer || [];
+	  function gtag(){dataLayer.push(arguments);}
+	  gtag('js', new Date());
+
+	  gtag('config', 'UA-154852876-1');
+	</script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+<style>
+		@media screen and (max-width: 480px){
+			body {
+			}
+		}
+	      body {
+		      font-family: sans-serif;
+	      }
+		  strong {
+			font-weight: bold;
+			color: red;
+		  }
+		  
+
+		  #location, #description{
+			font-size: small;
+		  }
+
+		  ul, ol {
+			margin: 0px;
+		  }
+		  
+		#maps {
+            display: table;
+			}
+		.submaps{
+            display: inline-block;
+			vertical-align: top;
+            white-space: nowrap;
+			padding: 0 0 0 20px;
+
+
+        }
+		.title{
+			background-color: #eee;
+			font-weight: bold;
+			font-size: larger;
+			text-align: center;
+			color: #000;
+		}
+		ul.submaps li{
+			list-style: none;
+			margin: 5px;
+		}
+		img {
+			margin: 0px 5px;
+			vertical-align: middle;
+		}
+		caption {
+			padding: 2px;
+		}
+		td {
+			border-style: none; 
+		}
+		.item_hide {
+			display: none;
+		}
+		.item_error {
+			background-color: #ddd;
+			/* display: none; */
+		}
+      </style>
+</head>
+<body>
+	<nav class="navbar navbar-primary bg-primary text-light p-0" id="main_navbar">
+		<h1 class="h4">OpenSwitchMaps Web</h1>
+		<div>
+			Map URL:<input type="url" class="" id="inputbox_map_url" placeholder="Enter Map URL">
+			<button type="submit" id="button_refresh_links" class="btn btn-secondary btn-sm" onclick="button_refresh_links();">Refresh links</button>
+		</div>
+
+		
+
+	</nav>
+
+	<div class="container-fluid alert-warning">
+		<div id="description">
+			<p>OpenSwitchMaps helps you to switch between map services, such as Google maps, OpenStreetMap, Bing map and so
+				on.
+				You can jump to another map service keeping the location and the zoom level</p>
+
+			<h2 class="h5">How to use</h2>
+			<ol>
+				<li><strong>First, add a bookmark(bookmarklet) to your browser</strong>: Drag following link to your
+					bookmark bar: <a
+						href="javascript:(function(){ window.location.href='https://tankaru.github.io/OpenSwitchMapsWeb/index.html#'+location.href;})();">OpenSwitchMaps
+						Web</a> OR bookmark following text(bookmarklet)</li>
+
+				<code>javascript:(function(){
+					window.location.href='https://tankaru.github.io/OpenSwitchMapsWeb/index.html#'+location.href;})();</code>
+				<li>Open a map service, for example <a href="https://www.openstreetmap.org">OpenStreetMap</a></li>
+				<li>Open saved bookmarklet</li>
+				<li>You will move to a web page(here). And you will get links to jump to other map service.</li>
+				
+			</ol>
+
+		</div>
+	</div>
+
+	<div class="container-fluid bg-light">
+		<div id="location">
+			<h2 class="h5">Location</h2>
+			<ul>
+				<div style="display:none">
+					<li>URL: <i><span id="showurl"></span></i></li>
+					<li>Lat: <i><span id="lat"><span></i>, Lon: <i><span id="lon"><span></i>, Zoom: <i><span
+								id="zoom"><span></i></li>
+					<li>Country code: <span id="country_code"></span></li>
+				</div>
+				<li>Address: <i><span id="address"></span></i></li>
+			</ul>
+		</div>
+
+		<span id="sorry"></span>
+	</div>
+
+<div class="container-fluid bg-white">
+	<div id="results">
+		<h2 class="h5">Maps:</h2>
+		<div id="maps">
+
+		</div>
+	</div>
+</div>
+
+<div class="container-fluid bg-info text-light">
+	<h2 class="h4"> Settings</h2>
+	<div class="form-check">
+		<input class="form-check-input" type="checkbox" value="" id="checkbox_show_descriptions" onchange="save_settings();">
+		<label class="form-check-label" for="checkbox_show_descriptions">Show descriptions</label>
+	</div>
+	
+	<div class="form-check">
+		<input class="form-check-input" type="checkbox" value="" id="checkbox_show_all" onchange="save_settings();">
+		<label class="form-check-label" for="checkbox_show_all">Show all maps</label>
+	</div>
+
+</div>
+
+<div class="container-fluid bg-secondary text-light">
+	<h2 class="h5">Notes</h2>
+	<ul >
+		<li><sup>*</sup> means 'Jump-to only'.</li>
+		<li>Go to <a href="https://tankaru.github.io/OpenSwitchMapsWeb/index.html">Instruction page</a> to get map
+			links.
+		<li>Browser extension version is also available. For <a href="https://chrome.google.com/webstore/detail/openswitchmaps/cfkddjlocfecchnemnnmmpdjcohgmkij">Chrome</a>, <a href="https://addons.mozilla.org/firefox/addon/openswitchmaps/">Firefox</a>.</li>
+		<li>Comments and bug reports are welcome at <a href="https://github.com/tankaru/OpenSwitchMapsWeb">Github</a>.
+		<li>Address data is obtained from <a
+				href="https://operations.osmfoundation.org/policies/nominatim/">Nominatim</a>.
+
+	</ul>
+</div>
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+<script src="maps.js"></script>
+<script src="main.js"></script>
+<script>
+
+</script>
+
+      
+</body>
+</html>

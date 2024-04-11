@@ -14,3 +14,20 @@ Currently I am not willing to pay this and use the OpenSwitchMapsWeb instead.
 1. You will move to a web page. And you will get links to map services
 
 ![Screenshot](screenshot.jpg)
+
+
+# OpenTrackTriviaWeb
+Web version of [TrackTrivia](https://github.com/limex/TrackTrivia).
+
+# Why not browser extension?
+There are ways to migrate a Chrome Extension to Safari, but having them permanent on the iphone/ipad needs an Apple Developer Account for €100 / year.  
+Currently I am not willing to pay this and use the OpenSwitchMapsWeb instead.
+
+## How to use
+1. Bookmark this bookmarklet
+```javascript:(function(){ window.location.href="https://limex.github.io/ttw/index.html#"+location.href;})();```
+1. Open Map service
+1. Open saved Bookmarklet
+1. You will move to a web page. And you will get links to map services
+
+![Screenshot](screenshot.jpg)

@@ -36,6 +36,7 @@ const SATELLITE_CATEGORY = "Satellite";
 const TOOLS_CATEGORY = "Tools";
 const WEATHER_CATEGORY = "Weather, Science";
 const WINTER_CATEGORY = "Winter";
+const WATER_CATEGORY = "Water";
 
 function sortByKey(array, key) {
   return array.sort(function (a, b) {
@@ -91,6 +92,27 @@ const maps_raw = [
     },
   },
   {
+    name: "Bing",
+    category: MISC_CATEGORY,
+    default_check: true,
+    domain: "www.bing.com",
+    getUrl(lat, lon, zoom) {
+      // https://learn.microsoft.com/en-us/bingmaps/articles/create-a-custom-map-url#collections-categories
+      return "https://www.bing.com/maps?cp=" + lat + "~" + lon + "&lvl=" + zoom;
+    },
+    getLatLonZoom(url) {
+      // https://www.bing.com/maps?q=Grindav%C3%ADk&FORM=HDRSC6&cp=63.825761%7E-22.17778&lvl=10.7
+      const match = url.match(
+        /www\.bing\.com\/maps.*cp=(-?\d[0-9.]*)%7E(-?\d[0-9.]*)&lvl=(-?\d[0-9.]*)/
+      );
+      if (match) {
+        let [, lat, lon, zoom] = match;
+        zoom = Math.round(zoom);
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
     name: "OpenStreetMap",
     category: OSM_CATEGORY,
     default_check: true,
@@ -132,6 +154,116 @@ const maps_raw = [
       );
       if (match) {
         const [, lat, lon, zoom] = match;
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
+    // https://map.osm.wikidata.link/map/16/48.2343/16.293?radius=5
+    name: "OWL Map",
+    category: OSM_CATEGORY,
+    default_check: true,
+    domain: "map.osm.wikidata.link",
+    description: "Wikidata items",
+    getUrl(lat, lon, zoom) {
+      return (
+        "https://map.osm.wikidata.link/map/" +
+        zoom +
+        "/" +
+        lat +
+        "/" +
+        lon +
+        "?radius=5"
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /map\.osm\.wikidata\.link\/map\/(\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
+      );
+      if (match) {
+        let [, zoom, lat, lon] = match;
+        zoom = Math.round(zoom);
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
+    // https://waterwaymap.org/#map=9.04/46.7192/17.3936&tiles=planet-waterway-name-group-name&len=5..inf
+    name: "WaterWayMap",
+    category: WATER_CATEGORY,
+    default_check: true,
+    domain: "waterwaymap.org",
+    description: "by lenght, navigatable",
+    getUrl(lat, lon, zoom) {
+      return (
+        "https://waterwaymap.org/#map=" +
+        zoom +
+        "/" +
+        lat +
+        "/" +
+        lon +
+        "&tiles=planet-waterway-name-group-name&len=5..inf"
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /waterwaymap\.org\/#map=(-?\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
+      );
+      if (match) {
+        let [, zoom, lat, lon] = match;
+        zoom = Math.round(zoom);
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
+    // https://www.flosm.org/de/Wassersport.html?lat=4.88779867&lon=7.08481579&r=238418.58&st=0&sw=anchorage,beacon,boathoist,boatyard,canoe,canoeing,crane,dock,ferryroute,ferrystop,ferryterminal,harbour,harbourmaster,marina,marinaberth,mooring,mooringbuoy,mooringitem,mooringprivate,pier,portfacilityberth,portfacilityoffice,rowing,seamarkbeacon,seamarkbuoy,seamarknotice,separationzone,shipwreck,slipway,watermotorboat,waternoboat,waterpoint,waterrowboat,watership,waterwayfuel,waterwayguide,waterwaylockgate,waterwayweir
+
+    name: "flosm",
+    category: WATER_CATEGORY,
+    default_check: true,
+    domain: "flosm.org",
+    description: "Watersport",
+    getUrl(lat, lon, zoom) {
+      return (
+        "https://www.flosm.org/de/Wassersport.html?lat=" +
+        lat +
+        "&lon=" +
+        lon +
+        "&r=" +
+        getRadiusForZoomLevel(zoom) +
+        "&st=0&sw=anchorage,beacon,boathoist,boatyard,canoe,canoeing,crane,dock,ferryroute,ferrystop,ferryterminal,harbour,harbourmaster,marina,marinaberth,mooring,mooringbuoy,mooringitem,mooringprivate,pier,portfacilityberth,portfacilityoffice,rowing,seamarkbeacon,seamarkbuoy,seamarknotice,separationzone,shipwreck,slipway,watermotorboat,waternoboat,waterpoint,waterrowboat,watership,waterwayfuel,waterwayguide,waterwaylockgate,waterwayweir"
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /flosm\.org\/de\/Wassersport\.html\?lat=(-?\d[0-9.]*)&lon=(-?\d[0-9.]*)&r=(-?\d[0-9.]*)/
+      );
+      if (match) {
+        let [, lat, lon, radius] = match;
+        zoom = getZoomLevel(radius);
+        zoom = Math.round(zoom);
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
+    // https://maps.grade.de/cemt.html#10/47.487550/16.964598
+    name: "Grade.de",
+    category: WATER_CATEGORY,
+    default_check: true,
+    domain: "grade.de",
+    description: "by lenght, navigatable",
+    getUrl(lat, lon, zoom) {
+      return "https://maps.grade.de/cemt.html#" + zoom + "/" + lat + "/" + lon;
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /maps\.grade\.de\/cemt\.html#(\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
+      );
+      if (match) {
+        let [, zoom, lat, lon] = match;
+        // zoom = Math.round(zoom);
         return [lat, lon, zoom];
       }
     },
@@ -418,6 +550,73 @@ const maps_raw = [
     },
   },
   {
+    name: "BRouter Grade.de",
+    category: WATER_CATEGORY,
+    default_check: true,
+    domain: "grade.de",
+    description: "Waterway Routing",
+    getUrl(lat, lon, zoom) {
+      return (
+        "https://brouter.grade.de/#map=" +
+        zoom +
+        "/" +
+        lat +
+        "/" +
+        lon +
+        "/CARTO,Seamarks,Wasserstrassenklassen,Bevaarbaarheid,Vaarweginformatie,route-quality&profile=river_canoe"
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /brouter\.grade\.de\/.*#map=(\d{1,2})\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
+      );
+      if (match) {
+        const [, zoom, lat, lon] = match;
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
+		// https://www.norgeskart.no/#!?project=norgeskart&layers=1002&zoom=13&lat=6649044.14&lon=262775.36
+		name: "Norgeskart",
+		category: OUTDOOR_CATEGORY,
+		default_check: true,
+		domain: "www.norgeskart.no",
+		description: "Outdoor, POI",
+		getUrl(lat, lon, zoom) {
+			return "https://www.norgeskart.no/#!?project=norgeskart&layers=1002,1013,1014,1015,1016,1017,1018,1019,1020,1021,1022,1023&zoom=" + zoom + "&lat=" + lat + "&lon=" + lon;
+		},
+		getLatLonZoom(url) {
+			const match = url.match(/www\.norgeskart\.no.*#.*layers=1002.*([0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/);
+
+			if (match) {
+				const [, zoom, lat, lon] = match;
+				return [lat, normalizeLon(lon), Math.round(Number(zoom))];
+			}
+		},
+	},
+  {
+    name: "Flussinfo",
+    category: WATER_CATEGORY,
+    default_check: true,
+    domain: "flussinfo.net",
+    description: "North Germany only",
+    getUrl(lat, lon, zoom) {
+      return (
+        "https://www.flussinfo.net/map/#" + zoom + "/" + lat + "/" + lon + ""
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /flussinfo\.net\/map\/#(\d{1,2})\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
+      );
+      if (match) {
+        const [, zoom, lat, lon] = match;
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
     name: "Bikerouter",
     category: CYCLING_CATEGORY,
     default_check: true,
@@ -607,7 +806,9 @@ const maps_raw = [
       );
     },
     getLatLonZoom(url) {
-      const match = url.match(/park4night\.com\/.*?lat=(-?\d[0-9.]*)&lng=(-?\d[0-9.]*)&z=(\d{1,2})/);
+      const match = url.match(
+        /park4night\.com\/.*?lat=(-?\d[0-9.]*)&lng=(-?\d[0-9.]*)&z=(\d{1,2})/
+      );
       if (match) {
         const [, lat, lon, zoom] = match;
         return [lat, lon, zoom];
@@ -1117,23 +1318,25 @@ const maps_raw = [
     },
   },
   {
+    // https://www.bergfex.at/?mapstate=47.091212,15.260954,11,o,430,47.420654,13.1286
     name: "Bergfex",
     category: OUTDOOR_CATEGORY,
     description: "Topo, Tracks, Tourism",
     default_check: true,
     domain: "bergfex.at",
     getUrl(lat, lon, zoom) {
+      const [minlon, minlat, maxlon, maxlat] = latLonZoomToBbox(lat, lon, zoom);
       return (
-        "https://www.bergfex.at/oesterreich/?mapstate=" +
-        lat +
+        "https://www.bergfex.at?mapstate=" +
+        minlat +
         "," +
-        lon +
+        minlon +
         "," +
         zoom +
-        ",o,0," +
-        lat +
+        ",o,430," +
+        maxlat +
         "," +
-        lon
+        maxlon
       );
     },
     getLatLonZoom(url) {
@@ -2056,7 +2259,7 @@ const maps_raw = [
     // https://www.opensnowmap.org/?zoom=15&lat=47.03757&lon=15.4687334#map=15/15.353/47.055&b=snowmap&m=false&h=false
     name: "OpenSnowMap",
     category: WINTER_CATEGORY,
-    default_check: false,
+    default_check: true,
     domain: "opensnowmap.org",
     description: "Winter sports map",
     getUrl(lat, lon, zoom) {
@@ -2082,6 +2285,7 @@ const maps_raw = [
       );
       if (match) {
         let [, zoom, lon, lat] = match;
+        return [lat, lon, zoom];
       }
     },
   },
@@ -2163,8 +2367,8 @@ const maps_raw = [
   {
     //http://map.openseamap.org/?zoom=6&lat=53.32140&lon=2.86829
     name: "OpenSeaMap",
-    category: MISC_CATEGORY,
-    default_check: false,
+    category: WATER_CATEGORY,
+    default_check: true,
     domain: "openseamap.org",
     description: "focus on nautical info",
     getUrl(lat, lon, zoom) {
@@ -2336,8 +2540,8 @@ const maps_raw = [
   {
     //http://beacons.schmirler.de/en/world.html#map=11/35.315176983316775/139.7419591178308&layers=OS5&details=18
     name: "Sea Beacons",
-    category: MISC_CATEGORY,
-    default_check: false,
+    category: WATER_CATEGORY,
+    default_check: true,
     domain: "schmirler.de",
     description: "Lighthouse map",
     getUrl(lat, lon, zoom) {
