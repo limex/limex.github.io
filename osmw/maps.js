@@ -1,3 +1,57 @@
+// EPSG 3857 (Web Mercator) to EPSG 4326 (WGS 84)
+function webMercatorToWGS84(lat, lon) {
+    
+  const e_value = 2.7182818284;
+  const X = 20037508.34;
+  const lat3857 = lat
+  const long3857 = lon;
+  
+  //converting the longitute from epsg 3857 to 4326
+  const long4326 = (long3857*180)/X;
+  
+  //converting the latitude from epsg 3857 to 4326 split in multiple lines for readability        
+  let lat4326 = lat3857/(X / 180);
+  const exponent = (Math.PI / 180) * lat4326;
+  
+  lat4326 = Math.atan(Math.pow(e_value, exponent));
+  lat4326 = lat4326 / (Math.PI / 360); // Here is the fixed line
+  lat4326 = lat4326 - 90;
+
+  return [lat4326, long4326];
+  
+}
+
+// EPSG 4326 (WGS 84) to EPSG 3857 (Web Mercator)
+function wgs84ToWebMercator(lat, lon) {
+  const X = 20037508.34;
+  let long3857 = (lon * X) / 180;
+  let lat3857 = parseFloat(lat) + 90;
+  lat3857 = lat3857 * (Math.PI/360);
+  lat3857 = Math.tan(lat3857);
+  lat3857 = Math.log(lat3857);
+  lat3857 = lat3857 / (Math.PI / 180);
+  lat3857 = (lat3857 * X) / 180;
+  return [lat3857, long3857];
+}
+
+
+function getZoomLevel(radius) {
+  let zoomLevel;
+  if (radius > 0) {
+    let radiusElevated = radius;
+    let scale = radiusElevated / 500.0;
+    zoomLevel = 18 - Math.log(scale) / Math.log(2);
+  }
+  zoomLevel = parseFloat(zoomLevel.toFixed(2));
+  return zoomLevel;
+}
+
+function getRadiusForZoomLevel(zoomLevel) {
+  let scale = Math.pow(2, 18 - zoomLevel);
+  let radiusElevated = scale * 500;
+  let radius = radiusElevated - radiusElevated / 2;
+  return radius;
+}
 
 //------------ replace below here -------------
 
@@ -92,6 +146,24 @@ const maps_raw = [
     },
   },
   {
+		// https://www.strava.com/maps/global-heatmap?style=light&terrain=false&sport=StandUpPaddling&gColor=hot&gOpacity=100&labels=true&poi=true#11.05/46.9717/15.0214
+		name: "STRAVA Heatmap SUP",
+		category: WATER_CATEGORY,
+		default_check: true,
+		domain: "strava.com",
+		description: "Heatmap of all athletes",
+		getUrl(lat, lon, zoom) {
+			return "https://www.strava.com/maps/global-heatmap?style=light&terrain=false&sport=StandUpPaddling&gColor=hot&gOpacity=100&labels=true&poi=true#" + zoom + "/" + lat + "/" + lon ;
+		},
+		getLatLonZoom(url) {
+			const match = url.match(/www\.strava\.com\/maps\/global-heatmap\?.*#(\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/);
+			if (match) {
+				const [, zoom, lat, lon] = match;
+				return [lat, lon, Math.round(Number(zoom))];
+			}
+		},
+	},
+  {
     name: "Bing",
     category: MISC_CATEGORY,
     default_check: true,
@@ -159,6 +231,34 @@ const maps_raw = [
     },
   },
   {
+    // https://wandrer.earth/dashboard/map#11.01/45.6868/8.1221
+    name: "Wandrer",
+    category: CYCLING_CATEGORY,
+    default_check: true,
+    domain: "wandrer.earth",
+    description: "Hike & Ride done",
+    getUrl(lat, lon, zoom) {
+      return (
+        "https://wandrer.earth/dashboard/map#" +
+        zoom +
+        "/" +
+        lat +
+        "/" +
+        lon
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /wandrer\.earth\/dashboard\/map#(\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
+      );
+      if (match) {
+        let [, zoom, lat, lon] = match;
+        zoom = Math.round(zoom);
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
     // https://map.osm.wikidata.link/map/16/48.2343/16.293?radius=5
     name: "OWL Map",
     category: OSM_CATEGORY,
@@ -179,6 +279,34 @@ const maps_raw = [
     getLatLonZoom(url) {
       const match = url.match(
         /map\.osm\.wikidata\.link\/map\/(\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
+      );
+      if (match) {
+        let [, zoom, lat, lon] = match;
+        zoom = Math.round(zoom);
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
+    // https://opentripmap.com/en/#14.25/53.2868/12.9567
+    name: "Open Trip",
+    category: POI_CATEGORY,
+    default_check: true,
+    domain: "opentripmap.com",
+    description: "Sightseeing, POI",
+    getUrl(lat, lon, zoom) {
+      return (
+        "https://opentripmap.com/en/#" +
+        zoom +
+        "/" +
+        lat +
+        "/" +
+        lon
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /opentripmap\.com\/en\/#(\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
       );
       if (match) {
         let [, zoom, lat, lon] = match;
@@ -248,6 +376,35 @@ const maps_raw = [
     },
   },
   {
+    // https://www.elwis.de/DE/Karte/?zoom=8&center=10.630644%2C52.41405&vl=route%2Csluice%2Cftm_group%2Cftm_nolimit%2Cftm_limit%2Cftm_obstru%2Cftm_warning%2Ckarte_farbig&date_start=2024-04-19&date_end=2024-05-19&route_option=bsf
+    name: "ELWIS",
+    category: WATER_CATEGORY,
+    default_check: true,
+    domain: "elwis.de",
+    description: "Wasserstraßen DE",
+    getUrl(lat, lon, zoom) {
+      return (
+        "https://www.elwis.de/DE/Karte/?zoom=" +
+        zoom +
+        "&center=" +
+        lon +
+        "%2C" +
+        lat +
+        "&vl=route%2Csluice%2Cftm_group%2Cftm_nolimit%2Cftm_limit%2Cftm_obstru%2Cftm_warning%2Ckarte_farbig&route_option=bsf"
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /elwis\.de\/.*\/\?zoom=(-?\d[0-9.]*)&center=(-?\d[0-9.]*)%2C(-?\d[0-9.]*)/
+      );
+      if (match) {
+        let [, zoom, lon, lat] = match;
+        zoom = Math.round(zoom);
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
     // https://maps.grade.de/cemt.html#10/47.487550/16.964598
     name: "Grade.de",
     category: WATER_CATEGORY,
@@ -285,6 +442,33 @@ const maps_raw = [
       );
       if (match) {
         const [, lat, lon, zoom] = match;
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
+    name: "AlpenvereinActiv",
+    category: OUTDOOR_CATEGORY,
+    default_check: true,
+    domain: "alpenvereinaktiv.com",
+    description: "more than OA",
+    // https://www.alpenvereinaktiv.com/de/touren/#caml=668,2lh8fe,7ld5ae,0,0&cat=*&filter=b-onlyTopTours-1,r-fullyTranslatedLangus-,r-openState-,sb-sortedBy-0&fu=1&ov=alerts,images,webcams&zc=9,14.75052,46.08657
+    getUrl(lat, lon, zoom) {
+      return (
+        "https://www.alpenvereinaktiv.com/de/touren/#caml=668,2lh8fe,7ld5ae,0,0&cat=*&filter=b-onlyTopTours-1,r-fullyTranslatedLangus-,r-openState-,sb-sortedBy-0&fu=1&ov=alerts,images,webcams&zc=" +
+        zoom +
+        "," +
+        lon +
+        "," +
+        lat
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /alpenvereinaktiv\.com\/.*?zc=(\d{1,2}),(-?\d[0-9.]*),(-?\d[0-9.]*)/
+      );
+      if (match) {
+        let [, zoom, lon, lat] = match;
         return [lat, lon, zoom];
       }
     },
@@ -817,7 +1001,7 @@ const maps_raw = [
   },
 
   {
-    // https://en.mapy.cz/fotografie?x=15.7503858&y=47.4797360&z=15&l=0
+    // https://en.mapy.cz/turisticka?l=0&x=12.9337801&y=53.1855514&z=14&ovl=2%2C4
     name: "Mapy.cz",
     category: OUTDOOR_CATEGORY,
     default_check: true,
@@ -825,18 +1009,18 @@ const maps_raw = [
     description: "Outdoor with geotagged Pics",
     getUrl(lat, lon, zoom) {
       return (
-        "https://en.mapy.cz/fotografie?x=" +
+        "https://en.mapy.cz/turisticka?l=0&x=" +
         lon +
         "&y=" +
         lat +
         "&z=" +
         zoom +
-        "&l=0"
+        "&ovl=2%2C4"
       );
     },
     getLatLonZoom(url) {
       const match = url.match(
-        /en\.mapy\.cz\/fotografie\?x=(-?\d[0-9.]*)&y=(-?\d[0-9.]*)&z=(\d{1,2})/
+        /en\.mapy\.cz\/.*x=(-?\d[0-9.]*)&y=(-?\d[0-9.]*)&z=(\d{1,2})/
       );
       if (match) {
         const [, lon, lat, zoom] = match;
@@ -1619,6 +1803,7 @@ const maps_raw = [
     },
   },
   {
+    // https://macrostrat.org/map/layers#x=13.5264&y=46.9266&z=7.9&show=fossils,geology
     name: "Macrostrat",
     category: WEATHER_CATEGORY,
     default_check: true,
@@ -1626,22 +1811,22 @@ const maps_raw = [
     description: "Geological map",
     getUrl(lat, lon, zoom) {
       return (
-        "https://macrostrat.org/map/#/z=" +
-        zoom +
-        "/x=" +
+        "https://macrostrat.org/map/#x=" +
         lon +
-        "/y=" +
+        "&y=" +
         lat +
-        "/bedrock/lines/"
+        "&z=" +
+        zoom +
+        "&show=fossils,geology"
       );
     },
     getLatLonZoom(url) {
       const match = url.match(
-        /macrostrat\.org\/map\/#\/z=([0-9.]+)\/x=(-?\d[0-9.]+)\/y=(-?\d[0-9.]+)/
+        /macrostrat\.org\/map\/.*#x=([0-9.]+)&y=(-?\d[0-9.]+)&z=(-?\d[0-9.]+)/
       );
       if (match) {
-        let [, zoom, lon, lat] = match;
-        return [lat, lon, zoom];
+        let [, lon, lat, zoom] = match;
+        return [lat, lon, Math.round(zoom)];
       }
     },
   },
@@ -1876,6 +2061,28 @@ const maps_raw = [
     },
   },
   {
+    // https://wikimap.wiki/?base=map&lat=1427437.5129&lon=7044822.2419&showAll=true&wiki=dewiki&zoom=11
+    name: "wikimap",
+    category: POI_CATEGORY,
+    default_check: true,
+    domain: "wikimap.wiki",
+    description: "Wikipedia POI",
+    getUrl(lat, lon, zoom) {
+      const [mlon, mlat] = wgs84ToWebMercator(lat,lon);
+      return "https://wikimap.wiki/?base=map&lat=" + mlat + "&lon=" + mlon + "&zoom=" + zoom + "&showAll=true&wiki=dewiki";
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /wikimap\.wiki\/.*&lat=(-?\d[0-9.]*)&lon=(-?\d[0-9.]*).*&zoom=(\d{1,2})/
+      );
+      if (match) {
+        const [, mlat, mlon, zoom] = match;
+        const [lat, lon] = webMercatorToWGS84(mlon, mlat);
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
     name: "wikimapia",
     category: POI_CATEGORY,
     default_check: false,
@@ -1924,7 +2131,7 @@ const maps_raw = [
   {
     name: "GeoHack",
     category: POI_CATEGORY,
-    default_check: false,
+    default_check: true,
     domain: "wmflabs.org",
     description: "Map links for Wikipedia articles",
     getUrl(lat, lon, zoom) {
