@@ -510,7 +510,7 @@ function load_display_maps_setting(){
 		}
 	}
 
-	document.getElementById('checkbox_show_descriptions').checked = ('checkbox_show_descriptions' in settings) ? settings['checkbox_show_descriptions'] : true;
+	document.getElementById('checkbox_show_descriptions').checked = ('checkbox_show_descriptions' in settings) ? settings['checkbox_show_descriptions'] : false;
 	document.getElementById('checkbox_show_all').checked = ('checkbox_show_all' in settings) ? settings['checkbox_show_all'] : true;
 
 
