@@ -215,7 +215,7 @@ function img_src_replace(domain) {
  
     // 画像がなかった時の処理
     img.onerror = function() {
-        $(`.${domain_class}`).attr('src', 'http://www.google.com/s2/favicons?domain=' + domain);
+        $(`.${domain_class}`).attr('src', 'https://www.google.com/s2/favicons?domain=' + domain);
 		//console.log('onerror:', img.src);
     }
 	

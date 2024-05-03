@@ -236,7 +236,7 @@ const maps_raw = [
     category: CYCLING_CATEGORY,
     default_check: true,
     domain: "wandrer.earth",
-    description: "Hike & Ride done",
+    description: "Hike Ride done",
     getUrl(lat, lon, zoom) {
       return (
         "https://wandrer.earth/dashboard/map#" +
@@ -941,7 +941,7 @@ const maps_raw = [
     },
   },
   {
-    // http://www.refuges.info/nav#lat=47.08286082279579&lon=15.447260141372682&zoom=17
+    // https://www.refuges.info/nav#lat=47.08286082279579&lon=15.447260141372682&zoom=17
     name: "Refuges Info",
     category: OUTDOOR_CATEGORY,
     default_check: true,
@@ -950,7 +950,7 @@ const maps_raw = [
     getUrl(lat, lon, zoom) {
       zoom = Math.round(zoom);
       return (
-        "http://www.refuges.info/nav#lat=" +
+        "https://www.refuges.info/nav#lat=" +
         lat +
         "&" +
         lon +
@@ -1474,29 +1474,6 @@ const maps_raw = [
       );
       if (match) {
         let [, lat, lon, zoom] = match;
-        return [lat, lon, zoom];
-      }
-    },
-  },
-  {
-    // https://wandrer.earth/dashboard/map#10.59/47.0028/15.5178
-    name: "Wandrer",
-    category: OUTDOOR_CATEGORY,
-    description: "Mark Strava Rides & Walks on Map",
-    default_check: true,
-    domain: "wandrer.earth",
-    getUrl(lat, lon, zoom) {
-      return (
-        "https://wandrer.earth/dashboard/map#" + zoom + "/" + lat + "/" + lon
-      );
-    },
-    getLatLonZoom(url) {
-      const match = url.match(
-        /wandrer\.earth\/.*map#(-?\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
-      );
-      if (match) {
-        let [, zoom, lat, lon] = match;
-        zoom = Math.round(zoom);
         return [lat, lon, zoom];
       }
     },
