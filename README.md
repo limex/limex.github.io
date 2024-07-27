@@ -14,8 +14,13 @@ Currently I am not willing to pay this and use the OpenSwitchMapsWeb instead.
 1. You will move to a web page. And you will get links to map services
 
 ![Screenshot](screenshot.jpg)
+  
 
+---
+---
+  
 
+  
 # OpenTrackTriviaWeb
 Web version of [TrackTrivia](https://github.com/limex/TrackTrivia).
 
@@ -30,4 +35,4 @@ Currently I am not willing to pay this and use the OpenSwitchMapsWeb instead.
 1. Open saved Bookmarklet
 1. You will move to a web page. And you will get links to map services
 
-![Screenshot](screenshot.jpg)
+![Screenshot](https://raw.githubusercontent.com/limex/TrackTrivia/main/Screenshot-chrome-settings.png)
