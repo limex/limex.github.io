@@ -53,7 +53,6 @@ function getRadiusForZoomLevel(zoomLevel) {
   return radius;
 }
 
-//------------ replace below here -------------
 
 function bboxToLatLonZoom(minlon, minlat, maxlon, maxlat) {
   const lon = (Number(minlon) + Number(maxlon)) / 2.0;
