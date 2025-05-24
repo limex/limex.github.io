@@ -1,9 +1,33 @@
+function WGS84ToUTM(lat, lon) {
+  proj4.defs([
+    ["EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs"],
+    ["EPSG:32633", "+proj=utm +zone=33 +datum=WGS84 +units=m +no_defs"],
+  ]);
+  lon = parseFloat(lon);
+  lat = parseFloat(lat);
+  const [easting, northing] = proj4("EPSG:4326", "EPSG:32633", [lon, lat]);
+  return [easting, northing];
+}
+
+function UTMToWGS84(easting, northing) {
+  proj4.defs([
+    [
+      "EPSG:25833",
+      "+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
+    ],
+    ["EPSG:4258", "+proj=longlat +ellps=GRS80 +no_defs"],
+  ]);
+  easting = parseFloat(easting);
+  northing = parseFloat(northing);
+  const [lon, lat] = proj4("EPSG:25833", "EPSG:4258", [easting, northing]);
+  return [lat, lon];
+}
 // EPSG 3857 (Web Mercator) to EPSG 4326 (WGS 84)
 function webMercatorToWGS84(lat, lon) {
     
   const e_value = 2.7182818284;
   const X = 20037508.34;
-  const lat3857 = lat
+  const lat3857 = lat;
   const long3857 = lon;
   
   //converting the longitute from epsg 3857 to 4326
@@ -145,23 +169,33 @@ const maps_raw = [
     },
   },
   {
-		// https://www.strava.com/maps/global-heatmap?style=light&terrain=false&sport=StandUpPaddling&gColor=hot&gOpacity=100&labels=true&poi=true#11.05/46.9717/15.0214
-		name: "STRAVA Heatmap SUP",
-		category: WATER_CATEGORY,
-		default_check: true,
-		domain: "strava.com",
-		description: "Heatmap of all athletes",
-		getUrl(lat, lon, zoom) {
-			return "https://www.strava.com/maps/global-heatmap?style=light&terrain=false&sport=StandUpPaddling&gColor=hot&gOpacity=100&labels=true&poi=true#" + zoom + "/" + lat + "/" + lon ;
-		},
-		getLatLonZoom(url) {
-			const match = url.match(/www\.strava\.com\/maps\/global-heatmap\?.*#(\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/);
-			if (match) {
-				const [, zoom, lat, lon] = match;
-				return [lat, lon, Math.round(Number(zoom))];
-			}
-		},
-	},
+    // https://www.strava.com/maps/global-heatmap?style=light&terrain=false&sport=StandUpPaddling&gColor=hot&gOpacity=100&labels=true&poi=true#11.05/46.9717/15.0214
+    // https://www.strava.com/maps/global-heatmap/personal-heatmap/segments?style=light&terrain=false&sport=StandUpPaddling&gColor=hot&gOpacity=100&labels=true&poi=true&cPhotos=true&pColor=blue&pCommutes=false&pHidden=true&pDate=ALL_TIME&pPrivate=true&pPhotos=true&pClusters=true&sType=all&sElevation=all&sSurface=0&sMin=0#15.25/48.325148/14.07017
+    name: "STRAVA Heatmap SUP",
+    category: WATER_CATEGORY,
+    default_check: true,
+    domain: "strava.com",
+    description: "Heatmap of all athletes",
+    getUrl(lat, lon, zoom) {
+      return (
+        "https://www.strava.com/maps/global-heatmap?style=light&terrain=false&sport=StandUpPaddling&gColor=hot&gOpacity=100&labels=true&poi=true#" +
+        zoom +
+        "/" +
+        lat +
+        "/" +
+        lon
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /www\.strava\.com\/maps\/global-heatmap.*#(\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
+      );
+      if (match) {
+        const [, zoom, lat, lon] = match;
+        return [lat, lon, Math.round(Number(zoom))];
+      }
+    },
+  },
   {
     name: "Bing",
     category: MISC_CATEGORY,
@@ -230,6 +264,65 @@ const maps_raw = [
     },
   },
   {
+    // pastvu.com?g=48.630047,19.333774&z=12&s=osm&t=kosmosnimki&type=1
+    name: "PastVu",
+    category: POI_CATEGORY,
+    default_check: true,
+    domain: "pastvu.com",
+    description: "Retro View",
+    getUrl(lat, lon, zoom) {
+      return (
+        "https://pastvu.com?g=" +
+        lat +
+        "," +
+        lon +
+        "&z=" +
+        zoom +
+        "&s=osm&t=kosmosnimki&type=1"
+      );
+    },
+    getLatLonZoom(url) {
+      // https://pastvu.com/?g=50.1542,20.0450&z=11&s=osm&t=kosmosnimki&type=1
+      const match = url.match(
+        /pastvu\.com\/\?g=(-?\d[0-9.]*),(-?\d[0-9.]*)(?:&z=(\d{1,2}))?/
+      );
+      if (match) {
+        let [, lat, lon, zoom] = match;
+        zoom = Math.round(zoom);
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
+    // https://wikishootme.toolforge.org/#lat=54.55513064540956&lng=13.396533653140068&zoom=13&layers=commons,flickr,geo_json,wikidata_image
+    name: "WikiShootMe",
+    category: POI_CATEGORY,
+    default_check: true,
+    domain: "wikishootme.toolforge.org",
+    description: "Wikimedia, Flickr",
+    getUrl(lat, lon, zoom) {
+      return (
+        "https://wikishootme.toolforge.org/#lat=" +
+        lat +
+        "&lng=" +
+        lon +
+        "&zoom=" +
+        zoom +
+        "&layers=commons,flickr,geo_json,wikidata_image"
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /wikishootme\.toolforge\.org\/#lat=(-?\d[0-9.]*)&lng=(-?\d[0-9.]*)&zoom=(\d{1,2})/
+      );
+      if (match) {
+        let [, lat, lon, zoom] = match;
+        zoom = Math.round(zoom);
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
     // https://wandrer.earth/dashboard/map#11.01/45.6868/8.1221
     name: "Wandrer",
     category: CYCLING_CATEGORY,
@@ -238,12 +331,7 @@ const maps_raw = [
     description: "Hike Ride done",
     getUrl(lat, lon, zoom) {
       return (
-        "https://wandrer.earth/dashboard/map#" +
-        zoom +
-        "/" +
-        lat +
-        "/" +
-        lon
+        "https://wandrer.earth/dashboard/map#" + zoom + "/" + lat + "/" + lon
       );
     },
     getLatLonZoom(url) {
@@ -294,14 +382,7 @@ const maps_raw = [
     domain: "opentripmap.com",
     description: "Sightseeing, POI",
     getUrl(lat, lon, zoom) {
-      return (
-        "https://opentripmap.com/en/#" +
-        zoom +
-        "/" +
-        lat +
-        "/" +
-        lon
-      );
+      return "https://opentripmap.com/en/#" + zoom + "/" + lat + "/" + lon;
     },
     getLatLonZoom(url) {
       const match = url.match(
@@ -345,6 +426,7 @@ const maps_raw = [
   },
   {
     // https://www.flosm.org/de/Wassersport.html?lat=4.88779867&lon=7.08481579&r=238418.58&st=0&sw=anchorage,beacon,boathoist,boatyard,canoe,canoeing,crane,dock,ferryroute,ferrystop,ferryterminal,harbour,harbourmaster,marina,marinaberth,mooring,mooringbuoy,mooringitem,mooringprivate,pier,portfacilityberth,portfacilityoffice,rowing,seamarkbeacon,seamarkbuoy,seamarknotice,separationzone,shipwreck,slipway,watermotorboat,waternoboat,waterpoint,waterrowboat,watership,waterwayfuel,waterwayguide,waterwaylockgate,waterwayweir
+    // https://www.flosm.org/de/Wassersport.html?lat=47.2824725&lon=12.2910200&r=500.00000&st=0&sw=anchorage,beacon,boathoist,boatyard,canoe,canoeing,crane,dock,ferryroute,ferrystop,ferryterminal,harbour,harbourmaster,marina,marinaberth,mooring,mooringbuoy,mooringitem,mooringprivate,pier,portfacilityberth,portfacilityoffice,rowing,seamarkbeacon,seamarkbuoy,seamarknotice,separationzone,shipwreck,slipway,watermotorboat,waternoboat,waterpoint,waterrowboat,watership,waterwayfuel,waterwayguide,waterwaylockgate,waterwayweir
 
     name: "flosm",
     category: WATER_CATEGORY,
@@ -368,7 +450,7 @@ const maps_raw = [
       );
       if (match) {
         let [, lat, lon, radius] = match;
-        zoom = getZoomLevel(radius);
+        let zoom = getZoomLevel(radius);
         zoom = Math.round(zoom);
         return [lat, lon, zoom];
       }
@@ -425,33 +507,13 @@ const maps_raw = [
     },
   },
   {
-    name: "OpenStreetCam",
-    category: POI_CATEGORY,
-    default_check: true,
-    domain: "openstreetcam.org",
-    description: "Crowdsourced street-level imagery available as CC BY-SA",
-    getUrl(lat, lon, zoom) {
-      return (
-        "https://openstreetcam.org/map/@" + lat + "," + lon + "," + zoom + "z"
-      );
-    },
-    getLatLonZoom(url) {
-      const match = url.match(
-        /openstreetcam\.org.*@(-?\d[0-9.]*),(-?\d[0-9.]*),(\d{1,2})/
-      );
-      if (match) {
-        const [, lat, lon, zoom] = match;
-        return [lat, lon, zoom];
-      }
-    },
-  },
-  {
     name: "AlpenvereinActiv",
     category: OUTDOOR_CATEGORY,
     default_check: true,
     domain: "alpenvereinaktiv.com",
     description: "more than OA",
     // https://www.alpenvereinaktiv.com/de/touren/#caml=668,2lh8fe,7ld5ae,0,0&cat=*&filter=b-onlyTopTours-1,r-fullyTranslatedLangus-,r-openState-,sb-sortedBy-0&fu=1&ov=alerts,images,webcams&zc=9,14.75052,46.08657
+    // https://www.alpenvereinaktiv.com/de/touren/#caml=a14,2cd5fp,7zpyc2,0,0&cat=*&filter=b-onlyTopTours-1,r-fullyTranslatedLangus-,r-openState-,sb-sortedBy-0&fu=1&ov=alerts,images,webcams&zc=14.,14.18412,48.32453
     getUrl(lat, lon, zoom) {
       return (
         "https://www.alpenvereinaktiv.com/de/touren/#caml=668,2lh8fe,7ld5ae,0,0&cat=*&filter=b-onlyTopTours-1,r-fullyTranslatedLangus-,r-openState-,sb-sortedBy-0&fu=1&ov=alerts,images,webcams&zc=" +
@@ -464,10 +526,11 @@ const maps_raw = [
     },
     getLatLonZoom(url) {
       const match = url.match(
-        /alpenvereinaktiv\.com\/.*?zc=(\d{1,2}),(-?\d[0-9.]*),(-?\d[0-9.]*)/
+        /alpenvereinaktiv\.com\/.*?zc=(-?\d[0-9.]*),(-?\d[0-9.]*),(-?\d[0-9.]*)/
       );
       if (match) {
         let [, zoom, lon, lat] = match;
+        zoom = Math.round(zoom);
         return [lat, lon, zoom];
       }
     },
@@ -500,6 +563,7 @@ const maps_raw = [
     },
   },
   {
+    // https://www.outdooractive.com/en/map/#bm=osm%3Asummer&caml=6y0,1rjxo7,ahnke0,0,0&fu=1&zc=10.,10.67459,63.43147
     name: "OutdoorActive",
     category: OUTDOOR_CATEGORY,
     default_check: true,
@@ -517,7 +581,7 @@ const maps_raw = [
     },
     getLatLonZoom(url) {
       const match = url.match(
-        /outdooractive\.com\/.*?zc=(\d{1,2}),(-?\d[0-9.]*),(-?\d[0-9.]*)/
+        /outdooractive\.com\/.*?zc=(-?\d[0-9.]*),(-?\d[0-9.]*),(-?\d[0-9.]*)/
       );
       if (match) {
         let [, zoom, lon, lat] = match;
@@ -691,7 +755,7 @@ const maps_raw = [
     },
     getLatLonZoom(url) {
       const match = url.match(
-        /camping\.info\/.*?area=(-?\d[0-9.]*),(-?\d[0-9.]*),(-?\d[0-9.]*),(-?\d[0-9.]*)&zl=(\d{1,2})/
+        /camping\.info\/.*?area=(-?\d[0-9.]*)%2C(-?\d[0-9.]*)%2C(-?\d[0-9.]*)%2C(-?\d[0-9.]*)&zl=(\d{1,2})/
       );
       if (match) {
         let [, minlon, minlat, maxlon, maxlat, zoom] = match;
@@ -734,9 +798,9 @@ const maps_raw = [
   },
   {
     name: "BRouter Grade.de",
+    domain: "grade.de",
     category: WATER_CATEGORY,
     default_check: true,
-    domain: "grade.de",
     description: "Waterway Routing",
     getUrl(lat, lon, zoom) {
       return (
@@ -760,24 +824,39 @@ const maps_raw = [
     },
   },
   {
-		// https://www.norgeskart.no/#!?project=norgeskart&layers=1002&zoom=13&lat=6649044.14&lon=262775.36
-		name: "Norgeskart",
-		category: OUTDOOR_CATEGORY,
-		default_check: true,
-		domain: "www.norgeskart.no",
-		description: "Outdoor, POI",
-		getUrl(lat, lon, zoom) {
-			return "https://www.norgeskart.no/#!?project=norgeskart&layers=1002,1013,1014,1015,1016,1017,1018,1019,1020,1021,1022,1023&zoom=" + zoom + "&lat=" + lat + "&lon=" + lon;
-		},
-		getLatLonZoom(url) {
-			const match = url.match(/www\.norgeskart\.no.*#.*layers=1002.*([0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/);
+    // https://www.norgeskart.no/#!?project=norgeskart&layers=1002&zoom=11&lat=6947649.55&lon=32630.40
 
-			if (match) {
-				const [, zoom, lat, lon] = match;
-				return [lat, normalizeLon(lon), Math.round(Number(zoom))];
-			}
-		},
-	},
+    // https://bikerouter.de/#map=11/59.9787/10.7378/standard,gravel-overlay&profile=m11n-gravel-pre
+    // https://www.norgeskart.no/#!?project=norgeskart&layers=1002&zoom=11&lat=6649790.33&lon=263090.69&sok=oslo&markerLat=6649284.978414578&markerLon=261503.27074663478&p=searchOptionsPanel
+
+    name: "Norgeskart",
+    category: OUTDOOR_CATEGORY,
+    default_check: true,
+    domain: "www.norgeskart.no",
+    description: "Outdoor, POI",
+    getUrl(lat, lon, zoom) {
+      const [easting, northing] = WGS84ToUTM(lat, lon);
+      return (
+        "https://www.norgeskart.no/#!?project=norgeskart&layers=1002&zoom=" +
+        zoom +
+        "&lat=" +
+        northing +
+        "&lon=" +
+        easting
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /www\.norgeskart\.no.*&zoom=(-?\d[0-9.]*).*&lat=(-?\d[0-9.]*).*&lon=(-?\d[0-9.]*)/
+      );
+
+      if (match) {
+        const [, zoom, northing, easting] = match;
+        const [lat, lon] = UTMToWGS84(easting, northing);
+        return [lat, lon, Math.round(Number(zoom))];
+      }
+    },
+  },
   {
     name: "Flussinfo",
     category: WATER_CATEGORY,
@@ -866,7 +945,7 @@ const maps_raw = [
     },
     getLatLonZoom(url) {
       const match = url.match(
-        /opencampingmap\.org\/#(\d{1,2})\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
+        /opencampingmap\.org\/.*#(\d{1,2})\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
       );
       if (match) {
         const [, zoom, lat, lon] = match;
@@ -920,6 +999,7 @@ const maps_raw = [
   },
   {
     // https://www.komoot.com/discover/Location/@46.8331821%2C15.9810184/tours?sport=racebike&distance=30
+    // https://www.komoot.com/discover/Location/@47.1919290,13.3243560/tours?sport=mtb_easy&map=true
     name: "Komoot Discover",
     category: OUTDOOR_CATEGORY,
     default_check: true,
@@ -931,7 +1011,7 @@ const maps_raw = [
     },
     getLatLonZoom(url) {
       const match = url.match(
-        /komoot\.com\/discover\/Location\/@(-?\d[0-9.]*)%2C(-?\d[0-9.]*)/
+        /komoot\.com\/discover\/Location\/@(-?\d[0-9.]*),(-?\d[0-9.]*)/
       );
       if (match) {
         const [, lat, lon] = match;
@@ -941,6 +1021,7 @@ const maps_raw = [
   },
   {
     // https://www.refuges.info/nav#lat=47.08286082279579&lon=15.447260141372682&zoom=17
+    // https://www.refuges.info/nav#lat=47.2295&12.1371&lon=12.1371&zoom=14
     name: "Refuges Info",
     category: OUTDOOR_CATEGORY,
     default_check: true,
@@ -962,10 +1043,10 @@ const maps_raw = [
     // https://www.refuges.info/nav?map=16/15.9197/46.876
     getLatLonZoom(url) {
       const match = url.match(
-        /refuges\.info\/.*?map=(\d{1,2})\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
+        /refuges\.info\/.*#lat=(-?\d[0-9.]*)&(-?\d[0-9.]*).*&zoom=(-?\d[0-9.]*)/
       );
       if (match) {
-        const [, zoom, lon, lat] = match;
+        const [, lat, lon, zoom] = match;
         return [lat, lon, zoom];
       }
     },
@@ -979,8 +1060,7 @@ const maps_raw = [
     getUrl(lat, lon, zoom) {
       zoom = Math.round(zoom);
       return (
-        // https://www.park4night.com/de/search?lat=45.8017&lng=10.957699999999932&z=16
-        "https://www.park4night.com/de/search?lat=" +
+        "https://park4night.com/de/search?lat=" +
         lat +
         "&lng=" +
         lon +
@@ -1000,7 +1080,7 @@ const maps_raw = [
   },
 
   {
-    // https://en.mapy.cz/turisticka?l=0&x=12.9337801&y=53.1855514&z=14&ovl=2%2C4
+    // https://mapy.com/en/turisticka?l=0&x=13.5258134&y=48.7272834&z=12&ovl=2%2C4
     name: "Mapy.cz",
     category: OUTDOOR_CATEGORY,
     default_check: true,
@@ -1008,7 +1088,7 @@ const maps_raw = [
     description: "Outdoor with geotagged Pics",
     getUrl(lat, lon, zoom) {
       return (
-        "https://en.mapy.cz/turisticka?l=0&x=" +
+        "https://mapy.com/en/turisticka?l=0&x=" +
         lon +
         "&y=" +
         lat +
@@ -1019,7 +1099,7 @@ const maps_raw = [
     },
     getLatLonZoom(url) {
       const match = url.match(
-        /en\.mapy\.cz\/.*x=(-?\d[0-9.]*)&y=(-?\d[0-9.]*)&z=(\d{1,2})/
+        /mapy\.com\/.*x=(-?\d[0-9.]*)&y=(-?\d[0-9.]*)&z=(\d{1,2})/
       );
       if (match) {
         const [, lon, lat, zoom] = match;
@@ -1029,6 +1109,7 @@ const maps_raw = [
   },
   {
     // https://zoom.earth/#view=47.479649,15.750171,15z
+    // https://zoom.earth/maps/satellite/#view=50.843194,4.382081,11z
     name: "Zoom Earth",
     category: SATELLITE_CATEGORY,
     default_check: true,
@@ -1039,7 +1120,7 @@ const maps_raw = [
     },
     getLatLonZoom(url) {
       const match = url.match(
-        /zoom\.earth\/#view=(-?\d[0-9.]*),(-?\d[0-9.]*),(\d{1,2})z/
+        /zoom\.earth\/.*#view=(-?\d[0-9.]*),(-?\d[0-9.]*),(\d{1,2})z/
       );
       if (match) {
         let [, lat, lon, zoom] = match;
@@ -1054,7 +1135,7 @@ const maps_raw = [
     domain: "mtbmap.cz",
     description: "Mountain Bike Map",
     getUrl(lat, lon, zoom) {
-      return "http://mtbmap.cz/#zoom=" + zoom + "&lat=" + lat + "&lon=" + lon;
+      return "https://mtbmap.cz/#zoom=" + zoom + "&lat=" + lat + "&lon=" + lon;
     },
     getLatLonZoom(url) {
       const match = url.match(
@@ -1154,7 +1235,16 @@ const maps_raw = [
     domain: "overpass-turbo.eu",
     description: "Power search tool for OpenStreetMap data",
     getUrl(lat, lon, zoom) {
-      return "http://overpass-turbo.eu/?Q=&C=" + lat + ";" + lon + ";" + zoom;
+      return ("https://overpass-turbo.eu/?Q=&C=" + lat + ";" + lon + ";" + zoom);
+    },
+    getLatLonZoom(url) {
+    const match = url.match(
+      /overpass-turbo\.eu\/.*&C=(-?\d[0-9.]*);(-?\d[0-9.]*);(-?\d[0-9.]*)/
+    );
+    if (match) {
+      let [, lat, lon, zoom] = match;
+      return [lat, lon, zoom];
+    }
     },
   },
   {
@@ -1165,7 +1255,7 @@ const maps_raw = [
     description: "OSM QA tool",
     getUrl(lat, lon, zoom) {
       return (
-        "http://osmose.openstreetmap.fr/map/#zoom=" +
+        "https://osmose.openstreetmap.fr/map/#zoom=" +
         zoom +
         "&lat=" +
         lat +
@@ -1219,7 +1309,7 @@ const maps_raw = [
     getUrl(lat, lon, zoom) {
       if (Number(zoom) > 18) zoom = 18;
       return (
-        "http://tools.geofabrik.de/osmi/?view=geometry&lon=" +
+        "https://tools.geofabrik.de/osmi/?view=geometry&lon=" +
         lon +
         "&lat=" +
         lat +
@@ -1247,7 +1337,7 @@ const maps_raw = [
       if (Number(zoom) > 18) zoom = 18;
       if (Number(zoom) < 12) zoom = 12;
       return (
-        "http://simon04.dev.openstreetmap.org/whodidit/?zoom=" +
+        "https://simon04.dev.openstreetmap.org/whodidit/?zoom=" +
         zoom +
         "&lat=" +
         lat +
@@ -1272,7 +1362,7 @@ const maps_raw = [
     domain: "tools.geofabrik.de",
     description: "Compare maps side-by-side",
     getUrl(lat, lon, zoom) {
-      return "http://tools.geofabrik.de/mc/#" + zoom + "/" + lat + "/" + lon;
+      return "https://tools.geofabrik.de/mc/#" + zoom + "/" + lat + "/" + lon;
     },
     getLatLonZoom(url) {
       const match = url.match(
@@ -1292,7 +1382,7 @@ const maps_raw = [
     description: "Compare maps by overlay",
     getUrl(lat, lon, zoom) {
       return (
-        "http://javier.jimenezshaw.com/mapas/mapas.html?z=" +
+        "https://javier.jimenezshaw.com/mapas/mapas.html?z=" +
         zoom +
         "&c=" +
         lat +
@@ -1306,25 +1396,6 @@ const maps_raw = [
       );
       if (match) {
         let [, zoom, lat, lon] = match;
-        return [lat, lon, zoom];
-      }
-    },
-  },
-  {
-    name: "map.orhyginal",
-    category: MISC_CATEGORY,
-    default_check: true,
-    domain: "orhyginal.fr",
-    description: "Portal of many map services",
-    getUrl(lat, lon, zoom) {
-      return "http://map.orhyginal.fr/#" + zoom + "/" + lat + "/" + lon;
-    },
-    getLatLonZoom(url) {
-      const match = url.match(
-        /map\.orhyginal\.fr.*#(\d[0-9]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
-      );
-      if (match) {
-        const [, zoom, lat, lon] = match;
         return [lat, lon, zoom];
       }
     },
@@ -1405,7 +1476,7 @@ const maps_raw = [
   },
   {
     // https://www.meteoblue.com/en/weather/webmap/?mapcenter=-49.7529N-4.6143&zoom=4
-    // https://www.meteoblue.com/en/weather/webmap/46.915N15.024E1464_Europe%2FVienna?variable=precipitation3h_cloudcover_pressure&level=surface&lines=none&mapcenter=43.6619N16.5502&zoom=10
+    // https://www.meteoblue.com/en/weather/maps/index#coords=4/48.66/14.17&map=windAnimation~rainbow~auto~10%20m%20above%20gnd~none
     name: "Meteoblue",
     category: WEATHER_CATEGORY,
     description: "7d Forecast, Maps Wind, Snow, Waves, Rain, ...",
@@ -1413,20 +1484,22 @@ const maps_raw = [
     domain: "meteoblue.com",
     getUrl(lat, lon, zoom) {
       return (
-        "https://www.meteoblue.com/en/weather/webmap/?mapcenter=" +
+        "https://www.meteoblue.com/en/weather/maps/index#coords=" +
+        zoom +
+        "/" +
         lat +
-        "N" +
+        "/" +
         lon +
-        "&zoom=" +
-        zoom
+        "&map=windAnimation~rainbow~auto~10%20m%20above%20gnd~none"
       );
     },
     getLatLonZoom(url) {
       const match = url.match(
-        /meteoblue\.com\/.*?mapcenter=(-?\d[0-9.]*)N(-?\d[0-9.]*)&zoom=(\d{1,2})/
+        /meteoblue\.com\/.*?coords=(-?\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
       );
       if (match) {
-        let [, lat, lon, zoom] = match;
+        let [, zoom, lat, lon] = match;
+        zoom = Math.round(zoom);
         return [lat, lon, zoom];
       }
     },
@@ -1545,7 +1618,7 @@ const maps_raw = [
     description: "Obtain a composed big map image",
     getUrl(lat, lon, zoom) {
       return (
-        "http://bigmap.osmz.ru/index.html#map=" + zoom + "/" + lat + "/" + lon
+        "https://bigmap.osmz.ru/index.html#map=" + zoom + "/" + lat + "/" + lon
       );
     },
     getLatLonZoom(url) {
@@ -1755,7 +1828,7 @@ const maps_raw = [
   {
     name: "EO Browser",
     category: SATELLITE_CATEGORY,
-    default_check: true,
+    default_check: false,
     domain: "sentinel-hub.com",
     description: "Satellite sensing image viewer",
     getUrl(lat, lon, zoom) {
@@ -2044,8 +2117,16 @@ const maps_raw = [
     domain: "wikimap.wiki",
     description: "Wikipedia POI",
     getUrl(lat, lon, zoom) {
-      const [mlon, mlat] = wgs84ToWebMercator(lat,lon);
-      return "https://wikimap.wiki/?base=map&lat=" + mlat + "&lon=" + mlon + "&zoom=" + zoom + "&showAll=true&wiki=dewiki";
+      const [mlon, mlat] = wgs84ToWebMercator(lat, lon);
+      return (
+        "https://wikimap.wiki/?base=map&lat=" +
+        mlat +
+        "&lon=" +
+        mlon +
+        "&zoom=" +
+        zoom +
+        "&showAll=true&wiki=dewiki"
+      );
     },
     getLatLonZoom(url) {
       const match = url.match(
@@ -2132,6 +2213,7 @@ const maps_raw = [
     },
   },
   {
+    // https://earth.google.com/web/@47.11696909,12.0823417,1850.4463772a,152688.95146921d,1y,-0h,0t,0r/data=CgRCAggBOgMKATBCAggASg0I____________ARAA
     name: "Google Earth",
     category: SATELLITE_CATEGORY,
     default_check: true,
@@ -2146,45 +2228,35 @@ const maps_raw = [
         /earth\.google\.com\/web\/@(-?\d[0-9.]*),(-?\d[0-9.]*),(-?\d[0-9.]*)a,(-?\d[0-9.]*)d/
       );
       if (match) {
-        let [, lat, lon, , zoom] = match;
+        let [, lat, lon, zoom] = match;
         zoom = Math.round(-1.44 * Math.log(zoom) + 27);
         return [lat, lon, zoom];
       }
     },
   },
   {
+    // https://livingatlas.arcgis.com/wayback/#active=6543&mapCenter=-115.29850%2C36.06400%2C14
     name: "ArcGIS Wayback",
     category: SATELLITE_CATEGORY,
     default_check: true,
     domain: "arcgis.com",
     description: "Historic satellite images since 2014",
     getUrl(lat, lon, zoom) {
-      const [minlon, minlat, maxlon, maxlat] = latLonZoomToBbox(lat, lon, zoom);
       return (
-        "http://livingatlas.arcgis.com/wayback/?ext=" +
-        minlon +
-        "," +
-        minlat +
-        "," +
-        maxlon +
-        "," +
-        maxlat
+        "https://livingatlas.arcgis.com/wayback/#active=6543&mapCenter=" +
+        lon +
+        "%2C" +
+        lat +
+        "%2C" +
+        zoom
       );
     },
     getLatLonZoom(url) {
-      let match;
-      if (
-        (match = url.match(
-          /livingatlas\.arcgis\.com\/wayback\/\?ext=(-?\d[0-9.]*),(-?\d[0-9.]*),(-?\d[0-9.]*),(-?\d[0-9.]*)/
-        ))
-      ) {
-        const [, minlon, minlat, maxlon, maxlat] = match;
-        const [lat, lon, zoom] = bboxToLatLonZoom(
-          minlon,
-          minlat,
-          maxlon,
-          maxlat
-        );
+      const match = url.match(
+        /livingatlas\.arcgis\.com\/wayback.*mapCenter=(-?\d[0-9.]*)%2C(-?\d[0-9.]*)%2C(\d{1,2})/
+      );
+      if (match) {
+        const [, lon, lat, zoom] = match;
         return [lat, lon, zoom];
       }
     },
@@ -2242,13 +2314,13 @@ const maps_raw = [
         /flickr\.com\/map\?&fLat=(-?\d[0-9.]*)&fLon=(-?\d[0-9.]*)&zl=(\d{1,2})/
       );
       if (match) {
-        let [, lon, lat, zoom] = match;
+        let [, lat, lon, zoom] = match;
         return [lat, lon, zoom];
       }
     },
   },
   {
-    //http://osm-analytics.org/#/show/bbox:136.68676,34.81081,137.11142,34.93364/buildings/recency
+    // https://osm-analytics.org/#/show/bbox:136.68676,34.81081,137.11142,34.93364/buildings/recency
     name: "OpenStreetMap Analytics",
     category: OSM_CATEGORY,
     default_check: false,
@@ -2257,7 +2329,7 @@ const maps_raw = [
     getUrl(lat, lon, zoom) {
       [minlon, minlat, maxlon, maxlat] = latLonZoomToBbox(lat, lon, zoom);
       return (
-        "http://osm-analytics.org/#/show/bbox:" +
+        "https://osm-analytics.org/#/show/bbox:" +
         minlon +
         "," +
         minlat +
@@ -2358,7 +2430,7 @@ const maps_raw = [
     },
   },
   {
-    //https://www.peakfinder.org/?lat=46.6052&lng=8.3217&azi=0&zoom=4&ele=1648
+    // https://www.peakfinder.com/?lat=63.47689&lng=10.88333&azi=0&alt=0&fov=103.35&cfg=s&name=
     name: "PeakFinder",
     category: OUTDOOR_CATEGORY,
     default_check: true,
@@ -2376,11 +2448,11 @@ const maps_raw = [
     },
     getLatLonZoom(url) {
       const match = url.match(
-        /www\.peakfinder\.org\/.*\?lat=(-?\d[0-9.]*)&lng=(-?\d[0-9.]*)&azi=[0-9]*&zoom=(\d[0-9.]*)/
+        /peakfinder\.com\/.*\?lat=(-?\d[0-9.]*)&lng=(-?\d[0-9.]*)/
       );
       if (match) {
-        const [, lat, lon, zoom] = match;
-        return [lat, lon, Math.round(Number(zoom))];
+        const [, lat, lon] = match;
+        return [lat, lon, 11.0];
       }
     },
   },
@@ -2473,7 +2545,7 @@ const maps_raw = [
     },
   },
   {
-    //http://www.opencyclemap.org/?zoom=17&lat=43.08561&lon=141.33047
+    //https://www.opencyclemap.org/?zoom=17&lat=43.08561&lon=141.33047
     name: "OpenCycleMap",
     category: CYCLING_CATEGORY,
     default_check: true,
@@ -2481,7 +2553,7 @@ const maps_raw = [
     description: "Cycling map",
     getUrl(lat, lon, zoom) {
       return (
-        "http://www.opencyclemap.org/?zoom=" +
+        "https://www.opencyclemap.org/?zoom=" +
         zoom +
         "&lat=" +
         lat +
@@ -2500,7 +2572,7 @@ const maps_raw = [
     },
   },
   {
-    //http://gk.historic.place/historische_objekte/translate/en/index-en.html?zoom=5&lat=50.37522&lon=11.5
+    //https://gk.historic.place/historische_objekte/translate/en/index-en.html?zoom=5&lat=50.37522&lon=11.5
     name: "Historic Place",
     category: POI_CATEGORY,
     default_check: true,
@@ -2508,7 +2580,7 @@ const maps_raw = [
     description: "Historic objects",
     getUrl(lat, lon, zoom) {
       return (
-        "http://gk.historic.place/historische_objekte/translate/en/index-en.html?zoom=" +
+        "https://gk.historic.place/historische_objekte/translate/en/index-en.html?zoom=" +
         zoom +
         "&lat=" +
         lat +
@@ -2548,7 +2620,7 @@ const maps_raw = [
     },
   },
   {
-    //http://map.openseamap.org/?zoom=6&lat=53.32140&lon=2.86829
+    // https://map.openseamap.org/?zoom=13.5&lon=10.81721&lat=54.10776&layers=TFTFFFTFFTFFFFFFFFFFFF
     name: "OpenSeaMap",
     category: WATER_CATEGORY,
     default_check: true,
@@ -2556,7 +2628,7 @@ const maps_raw = [
     description: "focus on nautical info",
     getUrl(lat, lon, zoom) {
       return (
-        "http://map.openseamap.org/?zoom=" +
+        "https://map.openseamap.org/?zoom=" +
         Math.min(Number(zoom), 18) +
         "&lat=" +
         lat +
@@ -2566,7 +2638,35 @@ const maps_raw = [
     },
     getLatLonZoom(url) {
       const match = url.match(
-        /map\.openseamap\.org\/\?zoom=(\d{1,2})&lat=(-?\d[0-9.]*)&lon=(-?\d[0-9.]*)/
+        /map\.openseamap\.org\/\?zoom=(-?\d[0-9.]*)&lon=(-?\d[0-9.]*)&lat=(-?\d[0-9.]*)/
+      );
+      if (match) {
+        let [, zoom, lon, lat] = match;
+        zoom = Math.round(Number(zoom));
+        return [lat, lon, zoom];
+      }
+    },
+  },
+  {
+    // https://fishing-app.gpsnauticalcharts.com/i-boating-fishing-web-app/fishing-marine-charts-navigation.html#15.87/45.7047/13.7082
+    name: "i-boating",
+    category: WATER_CATEGORY,
+    default_check: true,
+    domain: "gpsnauticalcharts.com",
+    description: "Marine charts",
+    getUrl(lat, lon, zoom) {
+      return (
+        "https://fishing-app.gpsnauticalcharts.com/i-boating-fishing-web-app/fishing-marine-charts-navigation.html#" +
+        zoom +
+        "/" +
+        lat +
+        "/" +
+        lon
+      );
+    },
+    getLatLonZoom(url) {
+      const match = url.match(
+        /fishing-app\.gpsnauticalcharts\.com\/i-boating-fishing-web-app\/fishing-marine-charts-navigation.html#(\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
       );
       if (match) {
         let [, zoom, lat, lon] = match;
@@ -2639,14 +2739,14 @@ const maps_raw = [
     },
   },
   {
-    //http://www.xn--pnvkarte-m4a.de/?#139.781;35.4722;10
+    //https://www.xn--pnvkarte-m4a.de/?#139.781;35.4722;10
     name: "ÖPNVKarte",
     category: MISC_CATEGORY,
     default_check: false,
     domain: "xn--pnvkarte-m4a.de",
     description: "Public transport map",
     getUrl(lat, lon, zoom) {
-      return `http://www.xn--pnvkarte-m4a.de/?#${lon};${lat};${zoom}`;
+      return `https://www.xn--pnvkarte-m4a.de/?#${lon};${lat};${zoom}`;
     },
     getLatLonZoom(url) {
       const match = url.match(
@@ -2659,7 +2759,7 @@ const maps_raw = [
     },
   },
   {
-    //http://www.lightningmaps.org/#m=oss;t=3;s=0;o=0;b=;ts=0;y=35.5065;x=139.8395;z=10;d=2;dl=2;dc=0;
+    //https://www.lightningmaps.org/#m=oss;t=3;s=0;o=0;b=;ts=0;y=35.5065;x=139.8395;z=10;d=2;dl=2;dc=0;
     name: "LightningMaps",
     category: WEATHER_CATEGORY,
     default_check: false,
@@ -2721,14 +2821,14 @@ const maps_raw = [
     },
   },
   {
-    //http://beacons.schmirler.de/en/world.html#map=11/35.315176983316775/139.7419591178308&layers=OS5&details=18
+    //https://beacons.schmirler.de/en/world.html#map=11/35.315176983316775/139.7419591178308&layers=OS5&details=18
     name: "Sea Beacons",
     category: WATER_CATEGORY,
     default_check: true,
     domain: "schmirler.de",
     description: "Lighthouse map",
     getUrl(lat, lon, zoom) {
-      return `http://beacons.schmirler.de/en/world.html#map=${zoom}/${lat}/${lon}&layers=OS5&details=18`;
+      return `https://beacons.schmirler.de/en/world.html#map=${zoom}/${lat}/${lon}&layers=OS5&details=18`;
     },
     getLatLonZoom(url) {
       const match = url.match(
@@ -2741,14 +2841,14 @@ const maps_raw = [
     },
   },
   {
-    //http://level0.osmz.ru/?url=map=18.74/47.040549/15.463744
+    //https://level0.osmz.ru/?url=map=18.74/47.040549/15.463744
     name: "Level0 Editor",
     category: OSM_CATEGORY,
     default_check: false,
     domain: "level0.osmz.ru",
     description: "low-level OSM Editor",
     getUrl(lat, lon, zoom) {
-      return `http://level0.osmz.ru/?url=map=${lon}/${lat}/${zoom}`;
+      return `https://level0.osmz.ru/?url=map=${lon}/${lat}/${zoom}`;
     },
     getLatLonZoom(url) {
       const match = url.match(
@@ -2782,26 +2882,6 @@ const maps_raw = [
     },
   },
   {
-    // https://api.maptiler.com/maps/874645db-d9b7-4abe-be15-86beea6b922e/?key=dWJtt6xXsxoSfRCqIovk#14.7/47.04154/15.52717
-    name: "MTB-Gravel",
-    category: CYCLING_CATEGORY,
-    default_check: true,
-    domain: "osmand.net",
-    description: "marked: private, no bike access, trails",
-    getUrl(lat, lon, zoom) {
-      return `https://api.maptiler.com/maps/874645db-d9b7-4abe-be15-86beea6b922e/?key=dWJtt6xXsxoSfRCqIovk#${zoom}/${lat}/${lon}`;
-    },
-    getLatLonZoom(url) {
-      const match = url.match(
-        /maptiler\.com\/maps\/.*#(-?\d[0-9.]*)\/(-?\d[0-9.]*)\/(-?\d[0-9.]*)/
-      );
-      if (match) {
-        const [, zoom, lat, lon] = match;
-        return [lat, lon, Math.round(Number(zoom))];
-      }
-    },
-  },
-  {
     name: "Waze Editor",
     category: OSM_CATEGORY,
     default_check: false,
@@ -2823,6 +2903,7 @@ const maps_raw = [
     },
   },
   {
+    // https://peakvisor.com/panorama.html?lat=47.07440&lng=12.69390&alt=4598&yaw=-52.70&pitch=-22.30&hfov=60.00
     name: "Peakvisor",
     category: OUTDOOR_CATEGORY,
     default_check: true,
@@ -2830,7 +2911,7 @@ const maps_raw = [
     description: "3D View Panorama",
     getUrl(lat, lon, zoom) {
       return (
-        "http://peakvisor.com/panorama.html?lat=" +
+        "https://peakvisor.com/panorama.html?lat=" +
         lat +
         "&lng=" +
         lon +
@@ -2842,8 +2923,8 @@ const maps_raw = [
         /peakvisor\.com\/.*?lat=(-?\d[0-9.]*)&lng=(-?\d[0-9.]*)/
       );
       if (match) {
-        let [, lat, lng] = match;
-        return [lat, lon, 16];
+        let [, lat, lon] = match;
+        return [lat, lon, 11];
       }
     },
   },
