@@ -1,27 +1,4 @@
-function WGS84ToUTM(lat, lon) {
-  proj4.defs([
-    ["EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs"],
-    ["EPSG:32633", "+proj=utm +zone=33 +datum=WGS84 +units=m +no_defs"],
-  ]);
-  lon = parseFloat(lon);
-  lat = parseFloat(lat);
-  const [easting, northing] = proj4("EPSG:4326", "EPSG:32633", [lon, lat]);
-  return [easting, northing];
-}
 
-function UTMToWGS84(easting, northing) {
-  proj4.defs([
-    [
-      "EPSG:25833",
-      "+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
-    ],
-    ["EPSG:4258", "+proj=longlat +ellps=GRS80 +no_defs"],
-  ]);
-  easting = parseFloat(easting);
-  northing = parseFloat(northing);
-  const [lon, lat] = proj4("EPSG:25833", "EPSG:4258", [easting, northing]);
-  return [lat, lon];
-}
 // EPSG 3857 (Web Mercator) to EPSG 4326 (WGS 84)
 function webMercatorToWGS84(lat, lon) {
     
