@@ -801,40 +801,6 @@ const maps_raw = [
     },
   },
   {
-    // https://www.norgeskart.no/#!?project=norgeskart&layers=1002&zoom=11&lat=6947649.55&lon=32630.40
-
-    // https://bikerouter.de/#map=11/59.9787/10.7378/standard,gravel-overlay&profile=m11n-gravel-pre
-    // https://www.norgeskart.no/#!?project=norgeskart&layers=1002&zoom=11&lat=6649790.33&lon=263090.69&sok=oslo&markerLat=6649284.978414578&markerLon=261503.27074663478&p=searchOptionsPanel
-
-    name: "Norgeskart",
-    category: OUTDOOR_CATEGORY,
-    default_check: true,
-    domain: "www.norgeskart.no",
-    description: "Outdoor, POI",
-    getUrl(lat, lon, zoom) {
-      const [easting, northing] = WGS84ToUTM(lat, lon);
-      return (
-        "https://www.norgeskart.no/#!?project=norgeskart&layers=1002&zoom=" +
-        zoom +
-        "&lat=" +
-        northing +
-        "&lon=" +
-        easting
-      );
-    },
-    getLatLonZoom(url) {
-      const match = url.match(
-        /www\.norgeskart\.no.*&zoom=(-?\d[0-9.]*).*&lat=(-?\d[0-9.]*).*&lon=(-?\d[0-9.]*)/
-      );
-
-      if (match) {
-        const [, zoom, northing, easting] = match;
-        const [lat, lon] = UTMToWGS84(easting, northing);
-        return [lat, lon, Math.round(Number(zoom))];
-      }
-    },
-  },
-  {
     name: "Flussinfo",
     category: WATER_CATEGORY,
     default_check: true,
